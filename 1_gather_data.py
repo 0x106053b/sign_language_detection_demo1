@@ -3,13 +3,20 @@ import mediapipe as mp
 import numpy as np
 import time, os
 
+# 실행경로를 설정한다.
+# 현재 1_gather_data.py 파일의 상위 폴더를 cwd로 설정한다.
+CURDIR = os.path.realpath(__file__)
+os.chdir(os.path.dirname(CURDIR))
+print(os.getcwd())
+
+
 # 알파벳 A-Z로 액션을 정의한다.
 # actions = [chr(x) for x in range(65, 91)]
-actions = ["A", "B", "C"]
+actions = ["A", "B", "C", "D", "E", "F"]
 # seq_length = 30
 
 # 각 동작을 30초의 loop를 돌며 기록한다.
-secs_for_action = 10
+secs_for_action = 20
 
 # Mediapipe 인식 model을 정의한다.
 mp_hands = mp.solutions.hands
@@ -43,11 +50,13 @@ while cap.isOpened():
         
         # 이미지를 화면에 표시
         cv2.putText(img, f"take '{action}' please", 
-                    org=(10, 30), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(255, 255, 255), thickness=2)
+                    org=(10, 30), fontFace=cv2.FONT_HERSHEY_DUPLEX, 
+                    fontScale=1, color=(0, 255, 0), 
+                    thickness=2)
         cv2.imshow('img', img)
 
         # 3초간 대기했다가 본격적으로 사진을 촬영할 수 있도록 한다.
-        cv2.waitKey(2000)
+        cv2.waitKey(3000)
 
         start_time = time.time()
         
@@ -75,9 +84,9 @@ while cap.isOpened():
 
                     # 인접한 joint 간의 관계를 계산하여 벡터화
                     # 20개의 마디를 저장한다고 이해할 수 있음
-                    v1 = joint[[0,1,2,3,0,5,6,7,0,9,10,11,0,13,14,15,0,17,18,19], :3] # Parent joint
-                    v2 = joint[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20], :3] # Child joint
-                    v = v2 - v1 # [20, 3]
+                    v1 = joint[[0,1,2,3,0,5,6,7,5,0,9,10,11,9,0,13,14,15,13,0,17,18,19], :3] # Parent joint
+                    v2 = joint[[1,2,3,4,5,6,7,8,9,9,10,11,12,13,13,14,15,16,17,17,18,19,20], :3] # Child joint
+                    v = v2 - v1 # [23, 3]
 
                     # 20개의 관절 정보를 정규화한다
                     # (손가락 관절의 길이와 상관 없이 인식할 수 있도록)
@@ -85,33 +94,35 @@ while cap.isOpened():
 
                     # Get angle using arcos of dot product
                     angle = np.arccos(np.einsum('nt,nt->n',
-                        v[[0,1,2,4,5,6,8,9,10,12,13,14,16,17,18],:], 
-                        v[[1,2,3,5,6,7,9,10,11,13,14,15,17,18,19],:])) # [15,]
-                    
-                    
+                        v[[0,1,2,4,5,6,4,8,9,10,11,9,13,14,15,16,14,18,19,20,21],:], 
+                        v[[1,2,3,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22],:])) # [21,]
+
                     angle = np.degrees(angle) # Convert radian to degree
 
                     angle_label = np.array([angle], dtype=np.float32)
-                    angle_label = np.append(angle_label, idx) # [16, ]
+                    angle_label = np.append(angle_label, idx) # [22,]
 
-                    # 21개의 관절 정보 * 3개의 차원 = 63개
-                    # 21개의 각 관절 포인트 visibility = 21개
-                    # angle_label = 16개
-                    # ==> d = [100, ]
-                    # 근데 v를 넣었으면 넣었지 joint는 왜 데이터로 쓰는거지 ...?
-                    d = np.concatenate([joint.flatten(), angle_label])
+                    # 21개의 각 포인트 visibility = 21개 
+                    # 23개의 관절 방향 정보 * 3개의 차원 = 69개
+                    # angle_label = 22개 (21 + label 1개)    
+                    # ==> d = [112, ]
+                    d = np.concatenate([joint[:,3], v.flatten(), angle_label])
                     data.append(d)
                     mp_drawing.draw_landmarks(img, res, mp_hands.HAND_CONNECTIONS)
 
             cv2.imshow('img', img)
+            
+            # 키보드에서 'q' 키를 누르면 다음 알파벳 학습으로 강제 skip
             if cv2.waitKey(1) == ord('q'):
                 break
 
         data = np.array(data)
-        print("=" * 30)
-        print(action, data.shape)
-        print("=" * 30)
+        print(f"{'='*30}\n{action} 손가락 데이터 {data.shape[0]}개 수집 완료")
         np.save(os.path.join('dataset', f'raw_{action}_{created_time}'), data)
-
+        cv2.putText(img, f"End '{action}' please", 
+                    org=(10, 30), fontFace=cv2.FONT_HERSHEY_DUPLEX, 
+                    fontScale=1, color=(0, 255, 0), 
+                    thickness=2)
+        cv2.waitKey(500)
     # 웹캠 off
     break
