@@ -8,16 +8,14 @@ import shutil
 # 현재 1_gather_data.py 파일의 상위 폴더를 cwd로 설정한다.
 CURDIR = os.path.realpath(__file__)
 os.chdir(os.path.dirname(CURDIR))
-print(os.getcwd())
 
 
-# 알파벳 A-Z로 액션을 정의한다.
-# actions = [chr(x) for x in range(65, 91)]
-actions = ["A", "B", "C", "D", "E", "F"]
-# seq_length = 30
+# sign language "J" 와 "Z"는 동적인 문자이기 때문에 demo1 데이터셋에서 제외하였음.
+# actions는 "J"와 "Z"를 제외한 알파벳 24자의 집합임.
+actions = [chr(x) for x in range(73, 77) if chr(x) not in ["J", "Z"]]
 
 # 각 동작을 30초의 loop를 돌며 기록한다.
-secs_for_action = 20
+secs_for_action = 30
 
 # Mediapipe 인식 model을 정의한다.
 mp_hands = mp.solutions.hands
@@ -33,10 +31,10 @@ cap = cv2.VideoCapture(0)
 # 새롭게 생성할 데이터셋의 생성시점을 정의하고
 # 데이터셋을 정의할 폴더를 생성한다.
 created_time = int(time.time())
-try:
-    os.makedirs('dataset', exist_ok=True)
-except:
+
+if os.path.isdir('dataset'):
     shutil.rmtree('dataset')
+os.makedirs('dataset', exist_ok=True)
 
 while cap.isOpened():
 
@@ -60,7 +58,7 @@ while cap.isOpened():
         cv2.imshow('img', img)
 
         # 3초간 대기했다가 본격적으로 사진을 촬영할 수 있도록 한다.
-        cv2.waitKey(3000)
+        cv2.waitKey(5000)
 
         start_time = time.time()
         
@@ -114,6 +112,10 @@ while cap.isOpened():
                     data.append(d)
                     mp_drawing.draw_landmarks(img, res, mp_hands.HAND_CONNECTIONS)
 
+            cv2.putText(img, str(round(time.time() - start_time, 2)), 
+                    org=(10, 30), fontFace=cv2.FONT_HERSHEY_DUPLEX, 
+                    fontScale=1, color=(0, 255, 0), 
+                    thickness=2)
             cv2.imshow('img', img)
             
             # 키보드에서 'q' 키를 누르면 다음 알파벳 학습으로 강제 skip
@@ -121,12 +123,8 @@ while cap.isOpened():
                 break
 
         data = np.array(data)
-        print(f"{'='*30}\{data.shape[0]} {action} data are gathered,")
+        print(f"{'='*30}\n[{action}] {data.shape[0]} data are gathered")
         np.save(os.path.join('dataset', f'raw_{action}_{created_time}'), data)
-        cv2.putText(img, f"End '{action}' please", 
-                    org=(10, 30), fontFace=cv2.FONT_HERSHEY_DUPLEX, 
-                    fontScale=1, color=(0, 255, 0), 
-                    thickness=2)
         cv2.waitKey(500)
     # 웹캠 off
     break
