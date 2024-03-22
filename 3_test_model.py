@@ -5,10 +5,11 @@ import pickle
 
 
 # sign language "J" 와 "Z"는 동적인 문자이기 때문에 demo1 데이터셋에서 제외하였음.
-# actions는 "J"와 "Z"를 제외한 알파벳 24자의 집합임.
-actions = [chr(x) for x in range(73, 77) if chr(x) not in ["J", "Z"]]
+actions = [chr(x) for x in range(65, 91) if chr(x) not in ["J", "Z", "P", "Q", "T"]]
+actions.append("I Love You!")
+
 pred_lst = []
-PRED_KEY = 5
+PRED_KEY = 500
 
 def most_common(lst):
     return max(set(lst), key=lst.count)
@@ -65,7 +66,7 @@ while cap.isOpened():
             # 최종 prediction으로 출력한다.
             if len(pred_lst) >= PRED_KEY:
                 final_y_pred = most_common(pred_lst[-PRED_KEY:])
-                cv2.putText(img, f"this is : {y_pred}", 
+                cv2.putText(img, f"{y_pred}", 
                         org=(10, 30), fontFace=cv2.FONT_HERSHEY_DUPLEX, 
                         fontScale=1, color=(0, 255, 0), 
                         thickness=2)

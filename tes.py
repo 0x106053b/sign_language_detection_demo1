@@ -1,6 +1,2 @@
-t = ['goose', 'duck', 'duck', 'goose']
-
-def most_common(lst):
-    return max(set(lst), key=lst.count)
-
-print(most_common(t))
+actions = [chr(x) for x in range(65, 91) if chr(x) not in ["J", "Z", "P", "Q", "T"]]
+print(actions[21])

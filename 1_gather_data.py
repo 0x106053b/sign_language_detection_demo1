@@ -11,8 +11,9 @@ os.chdir(os.path.dirname(CURDIR))
 
 
 # sign language "J" 와 "Z"는 동적인 문자이기 때문에 demo1 데이터셋에서 제외하였음.
-# actions는 "J"와 "Z"를 제외한 알파벳 24자의 집합임.
-actions = [chr(x) for x in range(73, 77) if chr(x) not in ["J", "Z"]]
+# "P", "Q", "T"는 동작 인식시키는 저조차도 어떻게 만들어지는(?) 자세인지 모르겠어서 제외하였습니다 ... 
+actions = [chr(x) for x in range(65, 91) if chr(x) not in ["J", "Z", "P", "Q", "T"]]
+actions.append("I Love You!")
 
 # 각 동작을 30초의 loop를 돌며 기록한다.
 secs_for_action = 30
@@ -32,6 +33,8 @@ cap = cv2.VideoCapture(0)
 # 데이터셋을 정의할 폴더를 생성한다.
 created_time = int(time.time())
 
+# dataset 폴더가 존재한다면, 기존 dataset 폴더 내의 데이터들을 *모두삭제* 한다.
+# dataset 폴더가 존재하지 않는다면 새롭게 폴더를 생성한다.
 if os.path.isdir('dataset'):
     shutil.rmtree('dataset')
 os.makedirs('dataset', exist_ok=True)
@@ -58,7 +61,7 @@ while cap.isOpened():
         cv2.imshow('img', img)
 
         # 3초간 대기했다가 본격적으로 사진을 촬영할 수 있도록 한다.
-        cv2.waitKey(5000)
+        cv2.waitKey(3000)
 
         start_time = time.time()
         
@@ -102,6 +105,7 @@ while cap.isOpened():
                     angle = np.degrees(angle) # Convert radian to degree
 
                     angle_label = np.array([angle], dtype=np.float32)
+
                     angle_label = np.append(angle_label, idx) # [22,]
 
                     # 21개의 각 포인트 visibility = 21개 
