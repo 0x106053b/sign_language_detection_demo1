@@ -2,6 +2,7 @@ import cv2
 import mediapipe as mp
 import numpy as np
 import time, os
+import shutil
 
 # 실행경로를 설정한다.
 # 현재 1_gather_data.py 파일의 상위 폴더를 cwd로 설정한다.
@@ -32,7 +33,10 @@ cap = cv2.VideoCapture(0)
 # 새롭게 생성할 데이터셋의 생성시점을 정의하고
 # 데이터셋을 정의할 폴더를 생성한다.
 created_time = int(time.time())
-os.makedirs('demo1/dataset', exist_ok=True)
+try:
+    os.makedirs('dataset', exist_ok=True)
+except:
+    shutil.rmtree('dataset')
 
 while cap.isOpened():
 
@@ -117,7 +121,7 @@ while cap.isOpened():
                 break
 
         data = np.array(data)
-        print(f"{'='*30}\n{action} 손가락 데이터 {data.shape[0]}개 수집 완료")
+        print(f"{'='*30}\{data.shape[0]} {action} data are gathered,")
         np.save(os.path.join('dataset', f'raw_{action}_{created_time}'), data)
         cv2.putText(img, f"End '{action}' please", 
                     org=(10, 30), fontFace=cv2.FONT_HERSHEY_DUPLEX, 
