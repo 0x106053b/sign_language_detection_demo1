@@ -3,7 +3,6 @@ import mediapipe as mp
 import numpy as np
 import pickle
 
-
 # sign language "J" 와 "Z"는 동적인 문자이기 때문에 demo1 데이터셋에서 제외하였음.
 actions = [chr(x) for x in range(65, 91) if chr(x) not in ["J", "Z", "P", "Q", "T"]]
 actions.append("I Love You!")
@@ -33,7 +32,6 @@ while cap.isOpened():
     result = hands.process(img)
     img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
 
-
     if result.multi_hand_landmarks is not None:
         for res in result.multi_hand_landmarks:
             joint = np.zeros((21, 4))
@@ -59,17 +57,22 @@ while cap.isOpened():
             y_pred = actions[int(model.predict(input_data)[0])]
             pred_lst.append(y_pred)
 
-
             mp_drawing.draw_landmarks(img, res, mp_hands.HAND_CONNECTIONS)
 
             # 가장 최근의 PRED_KEY개의 입력 데이터 중에서 가장 dominant한 prediction을
             # 최종 prediction으로 출력한다.
-            if len(pred_lst) >= PRED_KEY:
-                final_y_pred = most_common(pred_lst[-PRED_KEY:])
-                cv2.putText(img, f"{y_pred}", 
+
+            cv2.putText(img, f"this is : {y_pred}", 
                         org=(10, 30), fontFace=cv2.FONT_HERSHEY_DUPLEX, 
                         fontScale=1, color=(0, 255, 0), 
                         thickness=2)
+            
+            # if len(pred_lst) >= PRED_KEY:
+            #     final_y_pred = most_common(pred_lst[-PRED_KEY:])
+            #     cv2.putText(img, f"this is :{y_pred}", 
+            #             org=(10, 30), fontFace=cv2.FONT_HERSHEY_DUPLEX, 
+            #             fontScale=1, color=(0, 255, 0), 
+            #             thickness=2)
                 
     cv2.imshow("img", img)
                 
